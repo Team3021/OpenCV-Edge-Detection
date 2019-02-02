@@ -1,17 +1,18 @@
 package processing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -80,7 +81,7 @@ public class Processor {
 	public static List<MatOfPoint> getContours(Mat image) {
 		List<MatOfPoint> contours = new ArrayList<>();
 		Mat contoured = new Mat();
-		Imgproc.findContours(image, contours, contoured, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(image, contours, contoured, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 		return contours;
 	}
 	
@@ -93,13 +94,38 @@ public class Processor {
 	public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
 		List<Rect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
+		int index = 0;
 		for (MatOfPoint contour : contours) {
-				Rect rect =  Imgproc.boundingRect(contour);
-				if (Targeting.isTargetStripe(rect, minArea)) {
-					rectangles.add(rect);
-					toKeep.add(contour);
-				}
+			index += 1;
+
+			if (index <= 460 || index >= 497) {
+				continue;
+			}
+			
+			if (index == 479) continue;
+			
+		       double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
+		       MatOfPoint2f approx = new MatOfPoint2f();
+		       Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
+		       
+		       int points = approx.toList().size();
+		       
+		       if (points == 5) {
+		    	   System.out.println("Points: " + points + " for idx: " + index);
+		       
+		    	   RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
+		    	   Rect rect = rotatedRect.boundingRect();
+			
+			
+//					if (Targeting.isTargetStripe(rect, minArea)) {
+						rectangles.add(rect);
+						toKeep.add(contour);
+//					}
+		       }
 		}
+		
+		System.out.println("contour count: " + index);
+		
 		return rectangles;
 	}
 	
@@ -112,6 +138,9 @@ public class Processor {
 		return boxes;
 	}
 	
-	
+
+	public static void drawText(Mat image, Point ofs, String text) {
+	    Imgproc.putText(image, text, ofs, Core.FONT_HERSHEY_SIMPLEX, 1, LINE_COLOR);
+	}
 	
 }
