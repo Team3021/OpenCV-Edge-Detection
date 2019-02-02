@@ -28,11 +28,11 @@ public class Main {
 
 		System.out.println("Converting to grayscale");
 		Mat gray = Processor.grayscale(image);
-		IO.writeImage("res/gray.jpg", gray);
+		IO.writeImage("out/gray.jpg", gray);
 	
 		System.out.println("Detecting edges");
 		Mat edges = Processor.autoCanny(gray, 0.33);
-		IO.writeImage("res/edges.jpg", edges);
+		IO.writeImage("out/edges.jpg", edges);
 		
 		System.out.println("Drawing bounding boxes");
 		
@@ -43,10 +43,10 @@ public class Main {
 		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 10000);
 		
 		Mat contourMat = Processor.drawContours(image, contours);
-		IO.writeImage("res/contours.jpg", contourMat);
+		IO.writeImage("out/contours.jpg", contourMat);
 		
 		Mat stripes = Processor.drawRectangles(image, rectangles);
-		IO.writeImage("res/boxes.jpg", stripes);
+		IO.writeImage("out/boxes.jpg", stripes);
 		
 	}
 	
