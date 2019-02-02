@@ -1,17 +1,16 @@
 package processing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
@@ -94,11 +93,25 @@ public class Processor {
 		List<Rect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
 		for (MatOfPoint contour : contours) {
-				Rect rect =  Imgproc.boundingRect(contour);
+			double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
+			MatOfPoint2f approx = new MatOfPoint2f();
+			Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
+
+			
+			int points = approx.toList().size();
+
+			if (points == 4) {
+				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
+				Rect rect = rotatedRect.boundingRect();
+
+				System.out.println("Area: " + rect.width * rect.height + " Points: " + points);
+
+
 				if (Targeting.isTargetStripe(rect, minArea)) {
 					rectangles.add(rect);
 					toKeep.add(contour);
 				}
+			}
 		}
 		return rectangles;
 	}

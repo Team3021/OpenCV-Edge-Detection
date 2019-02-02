@@ -20,7 +20,7 @@ public class Main {
 		init();
 		
 		System.out.println("Reading image");
-		Mat image = IO.loadImage("res/Steamworks Peg.jpg");
+		Mat image = IO.loadImage("res/Blue Cargo - Simulated Low.png");
 		
 //		System.out.println("Blurring image");
 //		Mat blur = Processor.gaussianBlur(image, new Size(3, 3), 2);
@@ -31,7 +31,7 @@ public class Main {
 		IO.writeImage("out/gray.jpg", gray);
 	
 		System.out.println("Detecting edges");
-		Mat edges = Processor.autoCanny(gray, 0.33);
+		Mat edges = Processor.canny(gray, 45, 50);
 		IO.writeImage("out/edges.jpg", edges);
 		
 		System.out.println("Drawing bounding boxes");
@@ -40,7 +40,7 @@ public class Main {
 		List<MatOfPoint> contours = Processor.getContours(edges);
 		
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 10000);
+		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 300);
 		
 		Mat contourMat = Processor.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
