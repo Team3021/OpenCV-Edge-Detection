@@ -20,7 +20,7 @@ public class Main {
 		init();
 		
 		System.out.println("Reading image");
-		Mat image = IO.loadImage("res/Blue Paper.jpg");
+		Mat image = IO.loadImage("res/Steamworks Peg.jpg");
 		
 //		System.out.println("Blurring image");
 //		Mat blur = Processor.gaussianBlur(image, new Size(3, 3), 2);
