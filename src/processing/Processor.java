@@ -103,11 +103,9 @@ public class Processor {
 			if (points == 4) {
 				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
 				Rect rect = rotatedRect.boundingRect();
-
-				System.out.println("Area: " + rect.width * rect.height + " Points: " + points);
-
-
-				if (Targeting.isTargetStripe(rect, minArea)) {
+				
+				if ((rotatedRect.size.width * rotatedRect.size.height) > minArea && (Math.abs(rotatedRect.angle) < 15 || Math.abs(rotatedRect.angle) > 75)) {
+					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + "; Angle: " + rotatedRect.angle + "; Points: " + points);
 					rectangles.add(rect);
 					toKeep.add(contour);
 				}
