@@ -40,7 +40,7 @@ public class Main {
 		List<MatOfPoint> contours = Processor.getContours(edges);
 		
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 300);
+		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 3000);
 		
 		Mat contourMat = Processor.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
