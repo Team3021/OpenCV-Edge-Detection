@@ -6,7 +6,6 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 
 import processing.Processor;
@@ -21,7 +20,7 @@ public class Main {
 		init();
 		
 		System.out.println("Reading image");
-		Mat image = IO.loadImage("res/Blue Cargo.png");
+		Mat image = IO.loadImage("res/Blue Cargo - Simulated Low.png");
 		
 //		System.out.println("Blurring image");
 //		Mat blur = Processor.gaussianBlur(image, new Size(3, 3), 2);
@@ -32,7 +31,7 @@ public class Main {
 		IO.writeImage("out/gray.jpg", gray);
 	
 		System.out.println("Detecting edges");
-		Mat edges = Processor.autoCanny(gray, 0.33);
+		Mat edges = Processor.canny(gray, 45, 50);
 		IO.writeImage("out/edges.jpg", edges);
 		
 		System.out.println("Drawing bounding boxes");
@@ -40,14 +39,11 @@ public class Main {
 		System.out.println("Getting contours");
 		List<MatOfPoint> contours = Processor.getContours(edges);
 		
+		List<MatOfPoint> contoursFiltered = new ArrayList<>();
+		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 300);
+		
 		Mat contourMat = Processor.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
-		
-		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 1);
-		
-		Mat contourFilteredMat = Processor.drawContoursAdvanced(image, contours);
-		IO.writeImage("out/contours-filtered.jpg", contourFilteredMat);
 		
 		Mat stripes = Processor.drawRectangles(image, rectangles);
 		IO.writeImage("out/boxes.jpg", stripes);

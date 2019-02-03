@@ -50,7 +50,6 @@ public class Targeting {
 		double height = rect.height;
 		
 		double area = width * height;
-		System.out.println("Area: " + area);
 		
 		double rectangleAspectRatio = (width / height);
 		
