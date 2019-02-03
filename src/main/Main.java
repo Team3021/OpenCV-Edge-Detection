@@ -44,6 +44,9 @@ public class Main {
 		
 		Mat contourMat = Processor.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
+
+		Mat contourFilteredMat = Processor.drawContoursAdvanced(image, contours);
+		IO.writeImage("out/contours-filtered.jpg", contourFilteredMat);
 		
 		Mat stripes = Processor.drawRectangles(image, rectangles);
 		IO.writeImage("out/boxes.jpg", stripes);
