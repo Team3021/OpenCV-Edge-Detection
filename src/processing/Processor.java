@@ -20,6 +20,7 @@ import org.opencv.imgproc.Imgproc;
 public class Processor {
 	public static final int HIST_SIZE = 256;
 	public static final Scalar LINE_COLOR = new Scalar(0, 0, 255);
+	public static final Scalar POINT_COLOR = new Scalar(0, 255, 0);
 	
 	
 	public static Mat canny(Mat image, int thresh1, int thresh2) {
@@ -94,38 +95,13 @@ public class Processor {
 	public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
 		List<Rect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
-		int index = 0;
 		for (MatOfPoint contour : contours) {
-			index += 1;
-
-			if (index <= 460 || index >= 497) {
-				continue;
-			}
-			
-			if (index == 479) continue;
-			
-		       double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
-		       MatOfPoint2f approx = new MatOfPoint2f();
-		       Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
-		       
-		       int points = approx.toList().size();
-		       
-		       if (points == 5) {
-		    	   System.out.println("Points: " + points + " for idx: " + index);
-		       
-		    	   RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
-		    	   Rect rect = rotatedRect.boundingRect();
-			
-			
-//					if (Targeting.isTargetStripe(rect, minArea)) {
-						rectangles.add(rect);
-						toKeep.add(contour);
-//					}
-		       }
+				Rect rect =  Imgproc.boundingRect(contour);
+				if (Targeting.isTargetStripe(rect, minArea)) {
+					rectangles.add(rect);
+					toKeep.add(contour);
+				}
 		}
-		
-		System.out.println("contour count: " + index);
-		
 		return rectangles;
 	}
 	
@@ -143,4 +119,67 @@ public class Processor {
 	    Imgproc.putText(image, text, ofs, Core.FONT_HERSHEY_SIMPLEX, 1, LINE_COLOR);
 	}
 	
+	public static Mat drawContoursAdvanced(Mat image, List<MatOfPoint> contours) {
+		Mat contourFilteredMat = image.clone();
+
+		List<Rect> rectangles = new ArrayList<>();
+		System.out.println("Number of contours: " + contours.size());
+		int index = 0;
+		for (MatOfPoint contour : contours) {
+			index += 1;
+
+			/*
+			Points: [{282.0, 0.0}, {320.0, 95.0}, {467.0, 74.0}, {348.0, 157.0}, {511.0, 155.0}, {440.0, 115.0}, {516.0, 18.0}, {377.0, 95.0}, {376.0, 13.0}, {350.0, 104.0}, {298.0, 3.0}, {411.0, 0.0}] for index: 489
+			*/
+			
+			double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
+			MatOfPoint2f approx = new MatOfPoint2f();
+			Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
+
+			List<Point> points = approx.toList();
+
+			// index of right = 475
+			
+			if (index == 475) {
+				System.out.println("Points: " + points + " for index: " + index);
+
+				for (Point point : points) {
+					drawCircle(contourFilteredMat, point);
+				}
+
+				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
+
+				Point[] vertices = new Point[4];
+				rotatedRect.points(vertices);
+				List<MatOfPoint> boxContours = new ArrayList<>();
+				boxContours.add(new MatOfPoint(vertices));
+				Imgproc.drawContours(contourFilteredMat, boxContours, 0, new Scalar(255, 255, 0), 2);
+
+				Rect rect = rotatedRect.boundingRect();
+
+
+				//					if (Targeting.isTargetStripe(rect, minArea)) {
+				rectangles.add(rect);
+				//					}
+			}
+		}
+		
+		System.out.println("contour count: " + index);
+
+		Processor.drawText(contourFilteredMat, new Point(50,50), "Hello");
+		
+		contourFilteredMat = Processor.drawRectangles(contourFilteredMat, rectangles);
+
+		return contourFilteredMat;
+	}
+		
+
+    public static void drawCircle(Mat img, Point center) {
+    	int radius = 3;
+        int thickness = -1;
+        int lineType = 8;
+        int shift = 0;
+        
+        Imgproc.circle( img, center, radius, POINT_COLOR, thickness, lineType, shift);
+    }
 }

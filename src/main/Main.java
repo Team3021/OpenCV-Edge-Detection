@@ -46,8 +46,7 @@ public class Main {
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
 		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 1);
 		
-		Mat contourFilteredMat = Processor.drawContours(image, contoursFiltered);
-		Processor.drawText(contourFilteredMat, new Point(50,50), "Hello");
+		Mat contourFilteredMat = Processor.drawContoursAdvanced(image, contours);
 		IO.writeImage("out/contours-filtered.jpg", contourFilteredMat);
 		
 		Mat stripes = Processor.drawRectangles(image, rectangles);
