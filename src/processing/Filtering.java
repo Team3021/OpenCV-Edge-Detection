@@ -23,6 +23,8 @@ public class Filtering {
 	LINE_COLOR = new Scalar(0, 0, 255), 
 	ROTATED_COLOR = new Scalar(0, 100, 255);
 	
+	public static final double ANGLE_THRESH = 1.0;
+	
 	public static final int HIST_SIZE = 256;
 	
 	// Define constructor to make private
@@ -125,7 +127,7 @@ public class Filtering {
 		return rectangles;
 	}
 	
-	public static List<RotatedRect> getMinAreaBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
+	public static List<RotatedRect> getMinAreaBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep) {
 		List<RotatedRect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
 		for (MatOfPoint contour : contours) {
@@ -137,7 +139,7 @@ public class Filtering {
 			if (points == 4) {
 				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
 				
-				if ((rotatedRect.size.width * rotatedRect.size.height) > minArea && (Math.abs(rotatedRect.angle) < 15 || Math.abs(rotatedRect.angle) > 75)) {
+				if (Math.abs(rotatedRect.angle + 15) < ANGLE_THRESH || Math.abs(rotatedRect.angle + 75) < ANGLE_THRESH) {
 					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + "; Angle: " + rotatedRect.angle + "; Points: " + points);
 					rectangles.add(rotatedRect);
 					toKeep.add(contour);

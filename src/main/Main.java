@@ -41,7 +41,7 @@ public class Main {
 		List<MatOfPoint> contours = Filtering.getContours(edges);
 		
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<RotatedRect> rectangles = Filtering.getMinAreaBoxes(contours, contoursFiltered, 3000);
+		List<RotatedRect> rectangles = Filtering.getMinAreaBoxes(contours, contoursFiltered);
 		
 		Mat contourMat = Drawing.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);

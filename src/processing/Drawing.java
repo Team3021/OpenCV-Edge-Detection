@@ -16,7 +16,7 @@ public class Drawing {
 	
 	public static final Scalar 
 	POINT_COLOR = new Scalar(0, 0, 255),
-	LINE_COLOR = new Scalar(0, 0, 255), 
+	LINE_COLOR = new Scalar(0, 200, 255), 
 	ROTATED_COLOR = new Scalar(0, 100, 255);
 	
 	private static final int
@@ -24,6 +24,8 @@ public class Drawing {
 	CIRCLE_THICKNESS = -1,
 	CIRCLE_LINE_TYPE = 8,
 	CIRCLE_SHIFT = 0;
+	
+	private static final int LINE_WIDTH = 2;
 	
 	// Define constructor to make private
 	private Drawing() {
@@ -56,14 +58,15 @@ public class Drawing {
 			rotatedRect.points(vertices);
 
 			List<MatOfPoint> boxContours = new ArrayList<>();
+			MatOfPoint vertexMat = new MatOfPoint(vertices);
 			boxContours.add(new MatOfPoint(vertices));
 
 			Imgproc.drawContours(image, boxContours, 0, ROTATED_COLOR, 2);
 			
 			if (inclDetails) {
-				drawFittingLine(image, rotatedRect);
+				drawFittedLine(image, vertexMat, LINE_WIDTH, LINE_COLOR);
 				drawAllCircles(image, vertices, POINT_COLOR);
-				drawCircle(image, rotatedRect.center, ROTATED_COLOR);
+				drawCircle(image, rotatedRect.center, POINT_COLOR);
 			}
 		}
 	}
@@ -86,9 +89,41 @@ public class Drawing {
 			drawCircle(image, center, color);
 	}
 	
-	public static void drawFittingLine(Mat image, RotatedRect rotatedRect) {
-//		Mat line = new Mat();
-//		Imgproc.fitLine(mPoints, line, Imgproc.CV_DIST_L2, 0, 0.01, 0.01);
-	}
+	public static void drawFittedLine(Mat img, MatOfPoint points, int thickness, Scalar color) {
+		Mat line = new Mat();
+		
+		// Fit a line to the set of points
+		Imgproc.fitLine(points, line, Imgproc.CV_DIST_L2, 0, 0.01, 0.01);
+		
+		// Get the line vector and starting point data from the mat of the line
+		float[] vx = new float[1];
+		float[] vy = new float[1];
+		float[] x0 = new float[1];
+		float[] x1 = new float[1];
+		
+		line.get(0, 0, vx);
+		line.get(1, 0, vy);
+		line.get(2, 0, x0);
+		line.get(3, 0, x1);
+
+		float[] lineData = new float[]{vx[0], vy[0], x0[0], x1[0]};
+
+		// get the image size to limit the length of the resulting line
+	    double theMult = Math.max(img.height(), img.width());
+	    
+	    // calculate start point
+	    Point startPoint = new Point();
+	    startPoint.x = lineData[2]- theMult*lineData[0]; // x[0]
+	    startPoint.y = lineData[3] - theMult*lineData[1]; // y[0]
+	    
+	    // calculate end point
+	    Point endPoint = new Point();
+	    endPoint.x = lineData[2]+ theMult*lineData[0]; //x[1]
+	    endPoint.y = lineData[3] + theMult*lineData[1]; //y[1]
+
+	    // draw overlay of bottom lines on image
+//	    cvClipLine(cvGetSize(img), &startPoint, &endPoint);
+	    Imgproc.line(img, startPoint, endPoint, color, thickness, 8, 0);
+}
 	
 }
