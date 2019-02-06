@@ -3,22 +3,32 @@ package processing;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-public class Processor {
-	public static final int HIST_SIZE = 256;
-	public static final Scalar LINE_COLOR = new Scalar(0, 0, 255);
+public class Filtering {
+	public static final Scalar 
+	POINT_COLOR = new Scalar(0, 0, 255),
+	LINE_COLOR = new Scalar(0, 0, 255), 
+	ROTATED_COLOR = new Scalar(0, 100, 255);
 	
+	public static final int HIST_SIZE = 256;
+	
+	// Define constructor to make private
+	private Filtering() {
+		
+	}
 	
 	public static Mat canny(Mat image, int thresh1, int thresh2) {
 		Mat edges = new Mat();
@@ -83,29 +93,30 @@ public class Processor {
 		return contours;
 	}
 	
-	public static Mat drawContours(Mat image, List<MatOfPoint> contours) {
-		Mat drawn = image.clone();
-		Imgproc.drawContours(drawn, contours, -1, LINE_COLOR);
-		return drawn;
+	public static MatOfPoint2f approximate(MatOfPoint contour) {
+		double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
+		MatOfPoint2f approx = new MatOfPoint2f();
+		Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
+		return approx;
 	}
 	
 	public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
 		List<Rect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
 		for (MatOfPoint contour : contours) {
-			double epsilon = 0.015 * Imgproc.arcLength(new MatOfPoint2f(contour.toArray()), true);
-			MatOfPoint2f approx = new MatOfPoint2f();
-			Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), approx, epsilon, true);
-
+			
+			MatOfPoint2f approx = approximate(contour);
 			
 			int points = approx.toList().size();
 
 			if (points == 4) {
-				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
+				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
 				Rect rect = rotatedRect.boundingRect();
-				
-				if ((rotatedRect.size.width * rotatedRect.size.height) > minArea && (Math.abs(rotatedRect.angle) < 15 || Math.abs(rotatedRect.angle) > 75)) {
-					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + "; Angle: " + rotatedRect.angle + "; Points: " + points);
+
+				System.out.println("Area: " + rect.width * rect.height + " Points: " + points);
+
+
+				if (Targeting.isTargetStripe(rect, minArea)) {
 					rectangles.add(rect);
 					toKeep.add(contour);
 				}
@@ -114,15 +125,26 @@ public class Processor {
 		return rectangles;
 	}
 	
-	public static Mat drawRectangles(Mat image, List<Rect> rectangles) {
-		Mat boxes = image.clone();
-		for (Rect rect : rectangles) {
-			Imgproc.rectangle(boxes, rect.br(), rect.tl(), LINE_COLOR, 2);
+	public static List<RotatedRect> getMinAreaBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
+		List<RotatedRect> rectangles = new ArrayList<>();
+		System.out.println("Number of contours: " + contours.size());
+		for (MatOfPoint contour : contours) {
+			
+			MatOfPoint2f approx = approximate(contour);
+
+			int points = approx.toList().size();
+
+			if (points == 4) {
+				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
+				
+				if ((rotatedRect.size.width * rotatedRect.size.height) > minArea && (Math.abs(rotatedRect.angle) < 15 || Math.abs(rotatedRect.angle) > 75)) {
+					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + "; Angle: " + rotatedRect.angle + "; Points: " + points);
+					rectangles.add(rotatedRect);
+					toKeep.add(contour);
+				}
+			}
 		}
-		
-		return boxes;
+		return rectangles; 
 	}
-	
-	
 	
 }

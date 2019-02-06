@@ -6,9 +6,10 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
 
-import processing.Processor;
+import processing.Drawing;
+import processing.Filtering;
 
 public class Main {
 
@@ -27,25 +28,26 @@ public class Main {
 //		IO.writeImage("res/blur.jpg", blur);
 
 		System.out.println("Converting to grayscale");
-		Mat gray = Processor.grayscale(image);
+		Mat gray = Filtering.grayscale(image);
 		IO.writeImage("out/gray.jpg", gray);
 	
 		System.out.println("Detecting edges");
-		Mat edges = Processor.canny(gray, 45, 50);
+		Mat edges = Filtering.canny(gray, 45, 50);
 		IO.writeImage("out/edges.jpg", edges);
 		
 		System.out.println("Drawing bounding boxes");
 		
 		System.out.println("Getting contours");
-		List<MatOfPoint> contours = Processor.getContours(edges);
+		List<MatOfPoint> contours = Filtering.getContours(edges);
 		
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<Rect> rectangles = Processor.getBoundingBoxes(contours, contoursFiltered, 3000);
+		List<RotatedRect> rectangles = Filtering.getMinAreaBoxes(contours, contoursFiltered, 3000);
 		
-		Mat contourMat = Processor.drawContours(image, contours);
+		Mat contourMat = Drawing.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
 		
-		Mat stripes = Processor.drawRectangles(image, rectangles);
+		Mat stripes = image.clone();
+		Drawing.drawRotatedRectangles(stripes, rectangles, true);
 		IO.writeImage("out/boxes.jpg", stripes);
 		
 	}
