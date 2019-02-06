@@ -109,7 +109,7 @@ public class Processor {
 				Rect rect = rotatedRect.boundingRect();
 
 				if (rotatedRect.size.width * rotatedRect.size.height > minArea) {
-					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + " Points: " + points);
+//					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + " Points: " + points);
 
 					rectangles.add(rect);
 					toKeep.add(contour);
@@ -152,21 +152,22 @@ public class Processor {
 				
 				Rect rect = rotatedRect.boundingRect();
 
-				if (rotatedRect.size.width * rotatedRect.size.height > 3000) {
+				if (rotatedRect.size.width * rotatedRect.size.height > 1000) {
+					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + " Points: " + points + " Angle: " + rotatedRect.angle);
 					
 					// Draw the lines for the rotated rectangle edges
 					Point[] vertices = new Point[4];
 					rotatedRect.points(vertices);
 					
+					MatOfPoint matOfVertices = new MatOfPoint(vertices);
+					
 					List<MatOfPoint> boxContours = new ArrayList<>();
-					boxContours.add(new MatOfPoint(vertices));
+					boxContours.add(matOfVertices);
 					
 					Imgproc.drawContours(contourFilteredMat, boxContours, 0, ROTATED_COLOR, 2);
 					
 					// Draw the fitting line of the rotated rectangle
-					// TODO
-//					Mat line = new Mat();
-//					Imgproc.fitLine(mPoints, line, Imgproc.CV_DIST_L2, 0, 0.01, 0.01);
+					drawFittedLine(contourFilteredMat, matOfVertices, 2, ROTATED_COLOR);
 	
 					// Draw the four points of the rotated rectangle
 					for (Point point : points) {
@@ -189,7 +190,43 @@ public class Processor {
 
 		return contourFilteredMat;
 	}
+
+	public static void drawFittedLine(Mat img, MatOfPoint points, int thickness, Scalar color) {
+		Mat line = new Mat();
 		
+		// Fit a line to the set of points
+		Imgproc.fitLine(points, line, Imgproc.CV_DIST_L2, 0, 0.01, 0.01);
+		
+		// Get the line vector and starting point data from the mat of the line
+		float[] vx = new float[1];
+		float[] vy = new float[1];
+		float[] x0 = new float[1];
+		float[] x1 = new float[1];
+		
+		line.get(0, 0, vx);
+		line.get(1, 0, vy);
+		line.get(2, 0, x0);
+		line.get(3, 0, x1);
+
+		float[] lineData = new float[]{vx[0], vy[0], x0[0], x1[0]};
+
+		// get the image size to limit the length of the resulting line
+	    double theMult = Math.max(img.height(), img.width());
+	    
+	    // calculate start point
+	    Point startPoint = new Point();
+	    startPoint.x = lineData[2]- theMult*lineData[0]; // x[0]
+	    startPoint.y = lineData[3] - theMult*lineData[1]; // y[0]
+	    
+	    // calculate end point
+	    Point endPoint = new Point();
+	    endPoint.x = lineData[2]+ theMult*lineData[0]; //x[1]
+	    endPoint.y = lineData[3] + theMult*lineData[1]; //y[1]
+
+	    // draw overlay of bottom lines on image
+//	    cvClipLine(cvGetSize(img), &startPoint, &endPoint);
+	    Imgproc.line(img, startPoint, endPoint, color, thickness, 8, 0);
+	}
 
     public static void drawCircle(Mat img, Point center, Scalar color) {
     	int radius = 3;
