@@ -6,10 +6,13 @@ import java.util.List;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 
 import processing.Drawing;
 import processing.Filtering;
+import processing.Targeting;
+import target.HatchTarget;
 
 public class Main {
 
@@ -41,14 +44,23 @@ public class Main {
 		List<MatOfPoint> contours = Filtering.getContours(edges);
 		
 		List<MatOfPoint> contoursFiltered = new ArrayList<>();
-		List<RotatedRect> rectangles = Filtering.getMinAreaBoxes(contours, contoursFiltered);
+		List<RotatedRect> rectangles = Filtering.getRotatedRectangles(contours, contoursFiltered);
 		
 		Mat contourMat = Drawing.drawContours(image, contours);
 		IO.writeImage("out/contours.jpg", contourMat);
 		
+		HatchTarget target = Targeting.getTarget(rectangles);
+ 		List<RotatedRect> targets = target.getRotatedRects();
 		Mat stripes = image.clone();
-		Drawing.drawRotatedRectangles(stripes, rectangles, true);
+		Drawing.drawRotatedRectangles(stripes, targets, true);
+		
+		double center = image.width() * 0.5;
+		double dx = target.getCenter().x - center;
+		Drawing.drawText(stripes, new Point(30, image.height() - 30), Double.toString(dx));
+		
 		IO.writeImage("out/boxes.jpg", stripes);
+		
+		
 		
 	}
 	

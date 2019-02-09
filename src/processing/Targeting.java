@@ -1,71 +1,89 @@
 package processing;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-import org.opencv.core.Rect;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.core.RotatedRect;
+
+import target.HatchTarget;
 
 public class Targeting {
 
-	protected static final double STRIPE_ASPECT_RATIO = 2.0 / 5.0; // Width / Height of the target stripes
-	protected static final double STRIPE_ASPECT_RATIO_TOLERANCE = 0.25;
-
-	protected static final double STRIPE_TOP = 50;
+	public static final double 
+	/** The amount by which the angle of any box may be different from the expected value */
+	ANGLE_TOLERANCE = 1.0,
+	/** The ratio by which the areas of the boxes may be different. 
+	 *  Take careful note that this is in fact a ratio! */
+	AREA_TOLERANCE = 1.25,
+	/** The fraction of the area of a box by which the heights of the boxes may be off */
+	VERTICAL_TOLERANCE = 0.001;
 	
-	protected static final double STRIPE_WIDTH_MIN = 15;
-	protected static final double STRIPE_HEIGHT_MIN = 50;
-	
-	protected static final double STRIPE_WIDTH = 17;
-	protected static final double STRIPE_HEIGHT = 150;
-	
-	protected static final double STRIPE_WIDTH_MAX = 23;
-	protected static final double STRIPE_HEIGHT_MAX = 150;
-	
-	protected static final double STRIPE_OFFSET = 80;
-	
-	protected static final Size STRIPE_SIZE = new Size(STRIPE_WIDTH, STRIPE_HEIGHT);
-	
+	// Define constructor to make private
 	private Targeting() {
 		
 	}
 	
-	/**
-	 * Get rect, noob
-	 * @param boxes - all bounding boxes
-	 * @return all target stripes
-	 */
-	public static List<Rect> filterBoundingBoxes(List<Rect> boxes, int minArea) {
-		List<Rect> filtered = new ArrayList<>();
-		for (Rect box : boxes) {
-			if (isTargetStripe(box, minArea))
-				filtered.add(box);
+	
+	
+	public static HatchTarget getTarget(List<RotatedRect> rectangles) {
+		int size = rectangles.size();
+		
+		// Copy and sort the list
+		rectangles = new ArrayList<>(rectangles);
+		rectangles.sort(new sortByXCoordinate());
+		
+		/* Check all unique combinations to find the correct target. 
+		 * Exclude the rightmost rectangle from being the left rect,
+		 * as by definition there is nothing to the right of it */
+		for (int leftIndex = 0; leftIndex < size - 1; leftIndex++) {
+			RotatedRect leftRect = rectangles.get(leftIndex);
+			if (Math.abs(leftRect.angle + 75) > ANGLE_TOLERANCE)
+				continue;
+			
+			/* Iterate in the opposite direction, excluding rectangles that are at 
+			 * a smaller x coordinate than the current left rectangle */
+			for (int rightIndex = size - 1; rightIndex > leftIndex; rightIndex--) {
+				RotatedRect rightRect = rectangles.get(rightIndex);
+				
+				if (Math.abs(rightRect.angle + 15) > ANGLE_TOLERANCE)
+					continue;
+				
+				double areaLeft = leftRect.size.area();
+				double areaRight = rightRect.size.area();
+				
+				if (areaLeft > areaRight && areaLeft / areaRight > AREA_TOLERANCE)
+					continue;
+				if (areaLeft > areaRight && areaRight / areaLeft > AREA_TOLERANCE)
+					continue;
+				
+				// Vertical tolerance is proportional to the size of the boxes
+				double verticalTolerance = 0;
+				if (areaLeft >= areaRight)
+					verticalTolerance = areaLeft * VERTICAL_TOLERANCE;
+				else
+					verticalTolerance = areaRight * VERTICAL_TOLERANCE;
+				
+				if (Math.abs(leftRect.center.y - rightRect.center.y) > verticalTolerance)
+					continue;
+				
+				return new HatchTarget(leftRect, rightRect);
+			}
 		}
-		return filtered;
+		return null;
 	}
 	
-	public static boolean isTargetStripe(Rect rect, double minArea) {
-		double width = rect.width;
-		double height = rect.height;
-		
-		double area = width * height;
-		
-		double rectangleAspectRatio = (width / height);
-		
-		double tolerance = STRIPE_ASPECT_RATIO * STRIPE_ASPECT_RATIO_TOLERANCE;
-		
-		double lowerRange = STRIPE_ASPECT_RATIO - tolerance;
-		double upperRange = STRIPE_ASPECT_RATIO + tolerance;
-		
-//		System.out.println(lowerRange + " " + rectangleAspectRatio + " " + upperRange) ;
-		
-//		return lowerRange < rectangleAspectRatio 
-//		    && rectangleAspectRatio < upperRange
-//		    && area > minArea;
-		
-		return area > minArea;
-		
+	private static class sortByXCoordinate implements Comparator<RotatedRect> {
+
+		public int compare(RotatedRect rect1, RotatedRect rect2) {
+				if (rect1.center.x < rect2.center.x)
+					return -1;
+				else if (rect1.center.x > rect2.center.x)
+					return 1;
+				else
+					return 0;
+		}
+
 	}
 	
 }

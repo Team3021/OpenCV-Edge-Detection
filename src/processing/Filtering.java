@@ -1,29 +1,36 @@
 package processing;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeMap;
 
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import target.HatchTarget;
+
+/** 
+ * For code to find bounding boxes, please see Targeting. 
+ */
 public class Filtering {
 	public static final Scalar 
 	POINT_COLOR = new Scalar(0, 0, 255),
 	LINE_COLOR = new Scalar(0, 0, 255), 
 	ROTATED_COLOR = new Scalar(0, 100, 255);
 	
-	public static final double ANGLE_THRESH = 1.0;
+	public static final double 
+	/** The amount by which the angle of any box may be different from the expected value */
+	ANGLE_TOLERANCE = 1.0;
 	
 	public static final int HIST_SIZE = 256;
 	
@@ -102,32 +109,10 @@ public class Filtering {
 		return approx;
 	}
 	
-	public static List<Rect> getBoundingBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep, int minArea) {
-		List<Rect> rectangles = new ArrayList<>();
-		System.out.println("Number of contours: " + contours.size());
-		for (MatOfPoint contour : contours) {
-			
-			MatOfPoint2f approx = approximate(contour);
-			
-			int points = approx.toList().size();
-
-			if (points == 4) {
-				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
-				Rect rect = rotatedRect.boundingRect();
-
-				System.out.println("Area: " + rect.width * rect.height + " Points: " + points);
-
-
-				if (Targeting.isTargetStripe(rect, minArea)) {
-					rectangles.add(rect);
-					toKeep.add(contour);
-				}
-			}
-		}
-		return rectangles;
-	}
-	
-	public static List<RotatedRect> getMinAreaBoxes(List<MatOfPoint> contours, List<MatOfPoint> toKeep) {
+	/**
+	 * Get rect, noob
+	 */
+	public static List<RotatedRect> getRotatedRectangles(List<MatOfPoint> contours, List<MatOfPoint> toKeep) {
 		List<RotatedRect> rectangles = new ArrayList<>();
 		System.out.println("Number of contours: " + contours.size());
 		for (MatOfPoint contour : contours) {
@@ -139,11 +124,15 @@ public class Filtering {
 			if (points == 4) {
 				RotatedRect rotatedRect = Imgproc.minAreaRect(new MatOfPoint2f(contour. toArray()));
 				
-				if (Math.abs(rotatedRect.angle + 15) < ANGLE_THRESH || Math.abs(rotatedRect.angle + 75) < ANGLE_THRESH) {
-					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height + "; Angle: " + rotatedRect.angle + "; Points: " + points);
+				if (Math.abs(rotatedRect.angle + 15) < ANGLE_TOLERANCE || Math.abs(rotatedRect.angle + 75) < ANGLE_TOLERANCE) {
+					System.out.println("Area: " + rotatedRect.size.width * rotatedRect.size.height 
+								   + "; Angle: " + rotatedRect.angle 
+								   + "; Points: " + points
+								   + "; Center: (" + rotatedRect.center.x + ", " + rotatedRect.center.y + ")");
 					rectangles.add(rotatedRect);
 					toKeep.add(contour);
 				}
+				
 			}
 		}
 		return rectangles; 
