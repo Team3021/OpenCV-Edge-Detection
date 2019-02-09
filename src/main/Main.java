@@ -15,7 +15,8 @@ import processing.Targeting;
 import target.HatchTarget;
 
 public class Main {
-
+	public static final double off_x = 0.0, off_y = 0.0;
+	
 	public static void init() {
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 	}
@@ -54,9 +55,15 @@ public class Main {
 		Mat stripes = image.clone();
 		Drawing.drawRotatedRectangles(stripes, targets, true);
 		
-		double center = image.width() * 0.5;
-		double dx = target.getCenter().x - center;
-		Drawing.drawText(stripes, new Point(30, image.height() - 30), Double.toString(dx));
+		double center_x = image.width() * 0.5 + off_x;
+		double center_y = image.height() * 0.5 + off_y;
+		double dx = target.getCenter().x - center_x;
+		double dy = center_y - target.getCenter().y;
+		StringBuilder values = new StringBuilder();
+		values.append("(").append(dx).append(", ").append(dy).append(")");
+		String output = values.toString();
+		Drawing.drawText(stripes, new Point(30, image.height() - 30), output);
+		System.out.println(output);
 		
 		IO.writeImage("out/boxes.jpg", stripes);
 		
